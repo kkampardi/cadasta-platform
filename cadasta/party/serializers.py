@@ -3,27 +3,20 @@
 from django.utils.translation import ugettext as _
 from rest_framework import serializers
 
-from .models import Party, PartyRelationship, TenureRelationship
-from core import serializers as core_serializers
-from .choices import TENURE_RELATIONSHIP_TYPES
+from . import models
+from core.serializers import FieldSelectorSerializer
 from spatial.serializers import SpatialUnitSerializer
-from core.form_mixins import get_types
 
 
-class PartySerializer(core_serializers.JSONAttrsSerializer,
-                      core_serializers.SanitizeFieldSerializer,
-                      core_serializers.FieldSelectorSerializer,
-                      serializers.ModelSerializer):
-    attrs_selector = 'type'
-
+class PartySerializer(FieldSelectorSerializer, serializers.ModelSerializer):
     class Meta:
-        model = Party
+        model = models.Party
         fields = ('id', 'name', 'type', 'attributes', )
         read_only_fields = ('id', )
 
     def create(self, validated_data):
         project = self.context['project']
-        return Party.objects.create(
+        return models.Party.objects.create(
             project=project, **validated_data)
 
 
@@ -34,7 +27,7 @@ class PartyRelationshipReadSerializer(serializers.ModelSerializer):
     rel_class = serializers.SerializerMethodField()
 
     class Meta:
-        model = PartyRelationship
+        model = models.PartyRelationship
         fields = ('rel_class', 'id', 'party1', 'party2', 'type', 'attributes')
         read_only_fields = ('id',)
 
@@ -45,7 +38,7 @@ class PartyRelationshipReadSerializer(serializers.ModelSerializer):
 class PartyRelationshipWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = PartyRelationship
+        model = models.PartyRelationship
         fields = ('id', 'party1', 'party2', 'type', 'attributes')
         read_only_fields = ('id',)
 
@@ -69,7 +62,7 @@ class PartyRelationshipWriteSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         project = self.context['project']
-        return PartyRelationship.objects.create(
+        return models.PartyRelationship.objects.create(
             project=project, **validated_data)
 
 
@@ -81,7 +74,7 @@ class TenureRelationshipReadSerializer(serializers.ModelSerializer):
     rel_class = serializers.SerializerMethodField()
 
     class Meta:
-        model = TenureRelationship
+        model = models.TenureRelationship
         fields = ('rel_class', 'id', 'party', 'spatial_unit', 'tenure_type',
                   'attributes')
         read_only_fields = ('id',)
@@ -90,31 +83,14 @@ class TenureRelationshipReadSerializer(serializers.ModelSerializer):
         return 'tenure'
 
 
-class TenureRelationshipWriteSerializer(
-        core_serializers.JSONAttrsSerializer,
-        core_serializers.SanitizeFieldSerializer,
-        serializers.ModelSerializer):
+class TenureRelationshipWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = TenureRelationship
+        model = models.TenureRelationship
         fields = ('id', 'party', 'spatial_unit', 'tenure_type', 'attributes')
         read_only_fields = ('id',)
 
-    def validate_tenure_type(self, value):
-        prj = self.context['project']
-        allowed_types = get_types('tenure_type',
-                                  TENURE_RELATIONSHIP_TYPES,
-                                  questionnaire_id=prj.current_questionnaire)
-
-        if value not in allowed_types:
-            msg = "'{}' is not a valid choice for field 'tenure_type'."
-            raise serializers.ValidationError(msg.format(value))
-
-        return value
-
     def validate(self, data):
-        data = super().validate(data)
-
         if self.instance:
             party = data.get('party', self.instance.party)
             spatial_unit = data.get('spatial_unit', self.instance.spatial_unit)
@@ -131,5 +107,23 @@ class TenureRelationshipWriteSerializer(
 
     def create(self, validated_data):
         project = self.context['project']
-        return TenureRelationship.objects.create(
+        return models.TenureRelationship.objects.create(
             project=project, **validated_data)
+
+
+class TenureRelationshipTypeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.TenureRelationshipType
+        fields = ('id', 'label')
+
+
+class TenureRelationshipDownloadSerializer(serializers.ModelSerializer):
+
+    tenure_type = TenureRelationshipTypeSerializer()
+
+    class Meta:
+        model = models.TenureRelationship
+        fields = ('id', 'party_id', 'spatial_unit_id', 'tenure_type',
+                  'attributes')
+        read_only_fields = ('id',)
