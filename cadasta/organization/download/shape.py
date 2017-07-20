@@ -1,6 +1,5 @@
 import csv
 import os
-from collections import OrderedDict
 from zipfile import ZipFile
 
 from osgeo import ogr, osr
@@ -17,26 +16,20 @@ MIME_TYPE = 'application/zip'
 class ShapeExporter(Exporter):
 
     def write_items(self, filename, queryset, content_type, model_attrs):
-        schema_attrs = self.get_schema_attrs(content_type)
-
         # build column labels
-        attr_columns = OrderedDict()
-        for a in model_attrs:
-            attr_columns[a] = ''
-        for _, attrs in schema_attrs.items():
+        columns = list(model_attrs)
+        schema_attrs = self.get_schema_attrs(content_type)
+        for attrs in schema_attrs.values():
             for a in attrs.values():
-                if a.name not in attr_columns.keys():
-                    attr_columns[a.name] = None
+                columns.append(a.name)
 
         with open(filename, 'w+', newline='') as csvfile:
-            csvwriter = csv.writer(csvfile)
-            csvwriter.writerow(attr_columns.keys())
+            writer = csv.DictWriter(csvfile, fieldnames=columns)
+            writer.writeheader()
 
             for item in queryset:
-                values = self.get_values(item, model_attrs, schema_attrs)
-                data = attr_columns.copy()
-                data.update(values)
-                csvwriter.writerow(data.values())
+                data = self.get_values(item, model_attrs, schema_attrs)
+                writer.writerow(data)
 
     def write_relationships(self, filename):
         relationships = self.project.tenure_relationships.all()

@@ -188,9 +188,12 @@ class PartyRelationshipDetail(APIPermissionRequiredMixin,
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TenureRelationshipCreate(APIPermissionRequiredMixin,
-                               mixins.TenureRelationshipQuerySetMixin,
-                               generics.CreateAPIView):
+# TODO: I believe changing this from just Create to ListCreate is needed
+# to return project.tenure_relationships.all() (needed to generate
+# relationships.csv), however it seems to fail currently
+class TenureRelationshipListCreate(APIPermissionRequiredMixin,
+                                   mixins.TenureRelationshipQuerySetMixin,
+                                   generics.ListCreateAPIView):
 
     permission_required = update_permissions('tenure_rel.create')
     serializer_class = serializers.TenureRelationshipWriteSerializer

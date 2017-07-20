@@ -26,7 +26,7 @@ urlpatterns = [
         name='tenure_rel_detail'),
     url(
         r'^tenure/$',
-        party_api.TenureRelationshipCreate.as_view(),
+        party_api.TenureRelationshipListCreate.as_view(),
         name='tenure_rel_create'),
     url(
         (r'^tenure/(?P<tenure_rel_id>[-\w]+)/resources/'

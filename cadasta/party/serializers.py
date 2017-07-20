@@ -111,19 +111,10 @@ class TenureRelationshipWriteSerializer(serializers.ModelSerializer):
             project=project, **validated_data)
 
 
-class TenureRelationshipTypeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = models.TenureRelationshipType
-        fields = ('id', 'label')
-
-
 class TenureRelationshipDownloadSerializer(serializers.ModelSerializer):
-
-    tenure_type = TenureRelationshipTypeSerializer()
 
     class Meta:
         model = models.TenureRelationship
-        fields = ('id', 'party_id', 'spatial_unit_id', 'tenure_type',
+        fields = ('id', 'party_id', 'spatial_unit_id',
                   'attributes')
         read_only_fields = ('id',)

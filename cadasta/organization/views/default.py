@@ -735,16 +735,39 @@ class ProjectDataDownload(mixins.ProjectMixin,
         kwargs['user'] = self.request.user
         return kwargs
 
-    # def post(self, request, *args, **kwargs):
-    #     self.object = self.get_object()
-    #     form = self.get_form()
-    #     if form.is_valid():
-    #         path, mime_type = form.get_file()
-    #         filename, ext = os.path.splitext(path)
-    #         response = HttpResponse(open(path, 'rb'), content_type=mime_type)
-    #         response['Content-Disposition'] = ('attachment; filename=' +
-    #                                            self.object.slug + ext)
-    #         return response
+    def post(self, request, organization, project):
+        self.object = self.get_object()
+        form = self.get_form()
+        if not form.is_valid():
+            return self.form_invalid(form)
+
+        # TODO: Abstract to function
+        from tasks.celery import app
+        from rest_framework_tmp_scoped_token import TokenManager
+        endpoint = '/api/v1/organizations/{}/projects/{}'
+        endpoint = endpoint.format(organization, project)
+        token = TokenManager(
+            user=request.user,
+            endpoints={'GET': [endpoint]},
+            max_age=60 * 60 * 12,  # 12 hr expiration,
+            recipient='export-service')
+        token = token.generate_token()
+        output_type = form.cleaned_data['type']
+        payload = {
+            'org_slug': organization,
+            'project_slug': project,
+            'api_key': token,
+            'type': output_type,
+        }
+        # TODO: Create task function
+        app.send_task('export.export', kwargs=payload)
+
+        from django.contrib import messages
+        messages.add_message(self.request, messages.SUCCESS,
+                     _("Export in %r format scheduled." % output_type))  # TODO: Refine messaging
+        return redirect('organization:project-dashboard',
+                        organization=organization,
+                        project=project)
 
 
 DATA_IMPORT_FORMS = [('select_file', forms.SelectImportForm),

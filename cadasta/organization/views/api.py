@@ -260,66 +260,65 @@ class ProjectDetail(APIPermissionRequiredMixin,
             kwargs['hide_detail'] = True
         return super().get_serializer(*args, **kwargs)
 
+# TODO: I think this was the wrong approach, likely not needed
+# from rest_framework.views import APIView
+# from party import serializers as party_serializers
+# from resources.serializers import ResourceDownloadSerializer
 
-from rest_framework.views import APIView
-from party import serializers as party_serializers
-from resources.serializers import ResourceDownloadSerializer
+# class ProjectDownload(APIPermissionRequiredMixin,
+#                       mixins.ProjectMixin,
+#                       APIView):
+#     def get_actions(self, request):
+#         if self.get_object().archived:
+#             return 'project.view_archived'
+#         if self.get_object().public():
+#             return 'project.view'
+#         else:
+#             return 'project.view_private'
 
+#     def get_object(self, *args, **kwargs):
+#         return self.get_project()
 
-class ProjectDownload(APIPermissionRequiredMixin,
-                      mixins.ProjectMixin,
-                      APIView):
-    def get_actions(self, request):
-        if self.get_object().archived:
-            return 'project.view_archived'
-        if self.get_object().public():
-            return 'project.view'
-        else:
-            return 'project.view_private'
+#     permission_required = {
+#         'POST': get_actions,
+#     }
 
-    def get_object(self, *args, **kwargs):
-        return self.get_project()
+#     def _get_shp(self):
+#         return {
+#             'project_name': self.prj.name,
+#             'locations': [
+#                 (id, geometry.wkt if geometry else None) for (id, geometry)
+#                 in self.prj.spatial_units.values_list('id', 'geometry')
+#             ],
+#             'relationships': [
+#                 party_serializers.TenureRelationshipDownloadSerializer(tr).data
+#                 for tr in self.prj.tenure_relationships.all()
+#             ],
+#             'parties': [
+#                 party_serializers.PartySerializer(party).data
+#                 for party in self.prj.parties.all()
+#             ],
+#         }
 
-    permission_required = {
-        'POST': get_actions,
-    }
+#     def _get_res(self):
+#         return [
+#             ResourceDownloadSerializer(r).data
+#             for r in self.prj.resources.all()
+#         ]
 
-    def _get_shp(self):
-        return {
-            'project_name': self.prj.name,
-            'locations': [
-                (id, geometry.wkt if geometry else None) for (id, geometry)
-                in self.prj.spatial_units.values_list('id', 'geometry')
-            ],
-            'relationships': [
-                party_serializers.TenureRelationshipDownloadSerializer(tr).data
-                for tr in self.prj.tenure_relationships.all()
-            ],
-            'parties': [
-                party_serializers.PartySerializer(party).data
-                for party in self.prj.parties.all()
-            ],
-        }
-
-    def _get_res(self):
-        return [
-            ResourceDownloadSerializer(r).data
-            for r in self.prj.resources.all()
-        ]
-
-    def get(self, request, organization, project):
-        media_type = request.query_params.get('type')
-        if not media_type:
-            return Response({"error": "Must include type argument"}, status=400)
-        # import pudb; pu.db
-        payload = {}
-        if media_type in ('shp', 'all'):
-            payload['shp'] = self._get_shp()
-        # if media_type in ('xls', 'all'):
-        #     payload['xls'] = self._get_xls()
-        if media_type in ('res', 'all'):
-            payload['res'] = self._get_res()
-        return Response(payload)
+#     def get(self, request, organization, project):
+#         media_type = request.query_params.get('type')
+#         if not media_type:
+#             return Response({"error": "Must include type argument"}, status=400)
+#         # import pudb; pu.db
+#         payload = {}
+#         if media_type in ('shp', 'all'):
+#             payload['shp'] = self._get_shp()
+#         # if media_type in ('xls', 'all'):
+#         #     payload['xls'] = self._get_xls()
+#         if media_type in ('res', 'all'):
+#             payload['res'] = self._get_res()
+#         return Response(payload)
 
 
 class ProjectUsers(APIPermissionRequiredMixin,

@@ -479,7 +479,7 @@ class ProjectEditPermissions(PermissionsForm, forms.Form):
         return self.project
 
 
-# TODO: Remove
+# TODO: Remove, not needed after async added
 class DownloadForm(forms.Form):
     CHOICES = (
         ('shp', 'SHP'),
