@@ -11,8 +11,8 @@ from allauth.account.signals import password_changed
 
 from .. import serializers
 from ..utils import send_email_update_notification
-from ..exceptions import EmailNotVerifiedError
 from ..models import VerificationDevice
+from ..exceptions import EmailNotVerifiedError
 
 
 class AccountUser(djoser_views.UserView):

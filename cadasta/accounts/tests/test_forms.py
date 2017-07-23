@@ -23,6 +23,7 @@ from .factories import UserFactory
 
 
 class RegisterFormTest(UserTestCase, TestCase):
+
     def test_valid_data(self):
         data = {
             'username': 'imagine71',
@@ -654,8 +655,8 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
 
         form = forms.ProfileForm(data, request=request, instance=user)
         form.save()
-        with pytest.raises(EmailAddress.DoesNotExist):
-            EmailAddress.objects.get(email="user1@example.com")
+        assert EmailAddress.objects.filter(
+            email="user1@example.com").exists() is False
 
         with pytest.raises(IntegrityError):
             user = UserFactory.create(username='user2',
@@ -1155,6 +1156,7 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
 
 
 class ChangePasswordFormTest(UserTestCase, TestCase):
+
     def test_valid_data(self):
         user = UserFactory.create(password='beatles4Lyfe!')
 
@@ -1269,8 +1271,22 @@ class ChangePasswordFormTest(UserTestCase, TestCase):
         assert (_("The password for this user can not be changed.") in
                 form.errors.get('password'))
 
+    def test_password_contains_phone(self):
+        user = UserFactory.create(password='221B@bakerstreet',
+                                  phone='+919327768250')
+        data = {
+            'oldpassword': '221B@bakerstreet',
+            'password': '9327768250@bakerstreet'
+        }
+
+        form = forms.ChangePasswordForm(user, data)
+        assert form.is_valid() is False
+        assert (_("Passwords cannot contain your phone.")
+                in form.errors.get('password'))
+
 
 class ResetPasswordKeyFormTest(UserTestCase, TestCase):
+
     def test_valid_data(self):
         user = UserFactory.create(password='beatles4Lyfe!')
 
@@ -1365,8 +1381,21 @@ class ResetPasswordKeyFormTest(UserTestCase, TestCase):
         assert (_("The password for this user can not be changed.") in
                 form.errors.get('password'))
 
+    def test_password_contains_phone(self):
+        user = UserFactory.create(password='221B@bakerstreet',
+                                  phone='+919327768250')
+        data = {
+            'password': '9327768250@bakerstreet'
+        }
+
+        form = forms.ResetPasswordKeyForm(data, user=user)
+        assert form.is_valid() is False
+        assert (_("Passwords cannot contain your phone.")
+                in form.errors.get('password'))
+
 
 class ResetPasswordFormTest(UserTestCase, TestCase):
+
     def test_email_not_sent_reset(self):
         data = {
             'email': 'john@thebeatles.uk'
@@ -1386,8 +1415,55 @@ class ResetPasswordFormTest(UserTestCase, TestCase):
         form = forms.ResetPasswordForm(data)
         assert form.is_valid() is True
 
+    def test_msg_sent_reset_with_phone(self):
+        UserFactory.create(
+            password='221B@bakerstreet', phone='+919327768250')
+
+        data = {
+            'phone': '+919327768250'
+        }
+        form = forms.ResetPasswordForm(data)
+        request = HttpRequest()
+        setattr(request, 'session', {})
+        form.save(request)
+
+        assert form.is_valid() is True
+        assert VerificationDevice.objects.filter(
+            unverified_phone='+919327768250',
+            label='password_reset').exists() is True
+
+    def test_msg_not_sent_reset_with_phone(self):
+        data = {
+            'phone': '+919327768250'
+        }
+
+        form = forms.ResetPasswordForm(data)
+        assert form.is_valid() is True
+        request = HttpRequest()
+        setattr(request, 'session', {})
+        form.save(request)
+        assert VerificationDevice.objects.filter(
+            unverified_phone='+919327768250',
+            label='password_reset').exists() is False
+
+
+class ResetPasswordDoneTokenFormTest(UserTestCase, TestCase):
+
+    def test_valid_token(self):
+        data = {'token': '123456'}
+        form = forms.ResetPasswordDoneTokenForm(data)
+        assert form.is_valid() is True
+
+    def test_invalid_token(self):
+        data = {'token': 'ABCDEF'}
+        form = forms.ResetPasswordDoneTokenForm(data)
+        assert form.is_valid() is False
+        assert (_("Token must be a number.")
+                in form.errors['token'])
+
 
 class PhoneVerificationFormTest(UserTestCase, TestCase):
+
     def setUp(self):
         super().setUp()
         self.user = UserFactory.create(username='sherlock',
@@ -1399,7 +1475,8 @@ class PhoneVerificationFormTest(UserTestCase, TestCase):
         self.user.save()
         VerificationDevice.objects.create(
             user=self.user, unverified_phone=self.user.phone)
-        token = self.user.verificationdevice.generate_challenge()
+        device = self.user.verificationdevice_set.get(label='phone_verify')
+        token = device.generate_challenge()
 
         data = {
             'token': token
@@ -1413,7 +1490,8 @@ class PhoneVerificationFormTest(UserTestCase, TestCase):
     def test_invalid_token(self):
         VerificationDevice.objects.create(
             user=self.user, unverified_phone=self.user.phone)
-        token = self.user.verificationdevice.generate_challenge()
+        device = self.user.verificationdevice_set.get(label='phone_verify')
+        token = device.generate_challenge()
         token = str(int(token) - 1)
         data = {
             'token': token
@@ -1428,7 +1506,8 @@ class PhoneVerificationFormTest(UserTestCase, TestCase):
         VerificationDevice.objects.create(
             user=self.user, unverified_phone=self.user.phone)
         with mock.patch('time.time', return_value=_now):
-            token = self.user.verificationdevice.generate_challenge()
+            device = self.user.verificationdevice_set.get(label='phone_verify')
+            token = device.generate_challenge()
             data = {'token': token}
 
         with mock.patch('time.time', return_value=(
@@ -1442,7 +1521,8 @@ class PhoneVerificationFormTest(UserTestCase, TestCase):
     def test_valid_token_update_phone(self):
         VerificationDevice.objects.create(
             user=self.user, unverified_phone='+12345678990')
-        token = self.user.verificationdevice.generate_challenge()
+        device = self.user.verificationdevice_set.get(label='phone_verify')
+        token = device.generate_challenge()
 
         data = {'token': token}
         form = forms.PhoneVerificationForm(data, user=self.user)

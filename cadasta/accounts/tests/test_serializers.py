@@ -12,8 +12,8 @@ from core.messages import SANITIZE_ERROR
 from core.tests.utils.cases import UserTestCase, FileStorageTestCase
 from .. import serializers
 from ..models import User, VerificationDevice
-from ..exceptions import EmailNotVerifiedError
 from core.tests.utils.files import make_dirs  # noqa
+from ..exceptions import EmailNotVerifiedError
 from ..messages import phone_format
 from .factories import UserFactory
 
@@ -1064,3 +1064,24 @@ class ChangePasswordSerializerTest(UserTestCase, TestCase):
                   "lowercase characters, uppercase characters,"
                   " special characters, and/or numerical character.\n"
                   ) in serializer._errors['new_password'])
+
+    def test_password_contains_phone(self):
+        user = UserFactory.create(
+            username='sherlock',
+            password='221B@bakerstreet',
+            phone='+919327768250')
+        request = APIRequestFactory().patch('/user/sherlock', {})
+        force_authenticate(request, user=user)
+
+        data = {
+            'current_password': '221B@bakerstreet',
+            'new_password': '9327768250@bakerstreet',
+            're_new_password': '9327768250@bakerstreet',
+        }
+
+        serializer = serializers.ChangePasswordSerializer(
+            user, data=data, context={'request': Request(request)})
+
+        assert serializer.is_valid() is False
+        assert (_("Passwords cannot contain your phone.")
+                in serializer._errors['new_password'])

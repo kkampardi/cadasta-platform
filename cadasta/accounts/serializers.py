@@ -274,6 +274,7 @@ class AccountLoginSerializer(djoser_serializers.LoginSerializer):
 
 
 class ChangePasswordSerializer(djoser_serializers.SetPasswordRetypeSerializer):
+
     def validate(self, attrs):
 
         if not self.context['request'].user.change_pw:
@@ -289,5 +290,13 @@ class ChangePasswordSerializer(djoser_serializers.SetPasswordRetypeSerializer):
         if len(username) and username.casefold() in password.casefold():
             raise serializers.ValidationError(
                 _("The password is too similar to the username."))
+
+        phone = user.phone
+        if phone:
+            if phone_validator(phone):
+                phone = str(parse_phone(phone).national_number)
+                if phone in password:
+                    raise serializers.ValidationError(
+                        _("Passwords cannot contain your phone."))
 
         return password

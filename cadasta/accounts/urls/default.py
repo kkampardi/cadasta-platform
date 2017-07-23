@@ -1,5 +1,5 @@
 from django.conf.urls import url
-
+import allauth.account.views as allauth_views
 from ..views import default
 
 urlpatterns = [
@@ -17,4 +17,13 @@ urlpatterns = [
         name="account_reset_password"),
     url(r'^accountverification/$',
         default.ConfirmPhone.as_view(), name='verify_phone'),
+    url(r'^password/reset/done/$',
+        default.PasswordResetDoneView.as_view(),
+        name='account_reset_password_done'),
+    url(r'^password/reset/phone/$',
+        default.PasswordResetFromPhoneView.as_view(),
+        name='account_reset_password_from_phone'),
+    url(r'password/reset/key/done/$',
+        allauth_views.PasswordResetFromKeyDoneView.as_view(),
+        name='account_reset_password_from_key_done')
 ]
