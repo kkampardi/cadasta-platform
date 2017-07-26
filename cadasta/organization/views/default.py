@@ -742,12 +742,12 @@ class ProjectDataDownload(mixins.ProjectMixin,
             return self.form_invalid(form)
 
         # TODO: Abstract to function
-        from tasks.celery import app
         from rest_framework_tmp_scoped_token import TokenManager
         endpoint = '/api/v1/organizations/{}/projects/{}'
         endpoint = endpoint.format(organization, project)
+        user = request.user
         token = TokenManager(
-            user=request.user,
+            user=user,
             endpoints={'GET': [endpoint]},
             max_age=60 * 60 * 12,  # 12 hr expiration,
             recipient='export-service')
@@ -759,13 +759,23 @@ class ProjectDataDownload(mixins.ProjectMixin,
             'api_key': token,
             'type': output_type,
         }
-        # TODO: Create task function
-        app.send_task('export.export', kwargs=payload)
+
+        from tasks.models import BackgroundTask
+        BackgroundTask.objects.all().delete()
+        from resources.tasks import export, email, email_err
+        job = "export of {}".format(self.object.name)
+
+        export.apply_async(
+            kwargs=payload,
+            link=email.s(job, user.email),
+            link_error=email_err.s(job, user.email)
+        )
 
         from django.contrib import messages
         messages.add_message(self.request, messages.SUCCESS,
                      _("Export in %r format scheduled." % output_type))  # TODO: Refine messaging
-        return redirect('organization:project-dashboard',
+        return redirect('organization:project-download',
+        # return redirect('organization:project-dashboard',
                         organization=organization,
                         project=project)
 

@@ -571,5 +571,3 @@ ES_SCHEME = 'http'
 ES_HOST = 'localhost'
 ES_PORT = '9200'
 ES_MAX_RESULTS = 10000
-
-CELERY_QUEUES = ['export']

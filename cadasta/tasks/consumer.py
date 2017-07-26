@@ -28,7 +28,9 @@ class Worker(ConsumerMixin):
         try:
             return self._handle_task(body, message)
         except:
-            logger.exception("Failed to process message: %r", message)
+            logger.exception(
+                "Failed to process message:\nMESSAGE: %r\nBODY: %r",
+                message, body)
         finally:
             logger.info("ACKing message %r", message)
             if self.connection.as_uri().lower().startswith('sqs://'):

@@ -110,3 +110,8 @@ class BackgroundTask(RandomIDModel):
     @input_kwargs.setter
     def input_kwargs(self, value):
         self.input['kwargs'] = value
+
+    @property
+    def failed(self):
+        return self.__class__.objects.filter(
+            parent_id=self.root_id, result__status='FAILURE').exists()
