@@ -20,7 +20,7 @@ ATTRIBUTE_GROUPS = settings.ATTRIBUTE_GROUPS
 
 
 def check_relevant_clause(relevant):
-    if not re.match(r"^\$\{\w+\}=('|\"|”)\w+('|\"|”)$", relevant):
+    if not re.match(r"^\$\{\w+\}=('|\"|”|’)\w+('|\"|”|’)$", relevant):
         raise InvalidQuestionnaire(
             [_("Invalid relevant clause: {0}".format(relevant))])
 
