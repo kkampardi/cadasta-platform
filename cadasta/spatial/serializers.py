@@ -61,22 +61,7 @@ class SpatialUnitGeoJsonSerializer(geo_serializers.GeoFeatureModelSerializer):
         return location.name
 
 
-class SpatialRelationshipReadSerializer(serializers.ModelSerializer):
-
-    su1 = SpatialUnitSerializer(fields=('id', 'geometry', 'type'))
-    su2 = SpatialUnitSerializer(fields=('id', 'geometry', 'type'))
-    rel_class = serializers.SerializerMethodField()
-
-    class Meta:
-        model = SpatialRelationship
-        fields = ('rel_class', 'id', 'su1', 'su2', 'type', 'attributes')
-        read_only_fields = ('id',)
-
-    def get_rel_class(self, obj):
-        return 'spatial'
-
-
-class SpatialRelationshipWriteSerializer(serializers.ModelSerializer):
+class SpatialRelationshipSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SpatialRelationship
@@ -104,3 +89,18 @@ class SpatialRelationshipWriteSerializer(serializers.ModelSerializer):
         project = self.context['project']
         return SpatialRelationship.objects.create(
             project=project, **validated_data)
+
+
+class SpatialRelationshipNestedSerializer(serializers.ModelSerializer):
+
+    su1 = SpatialUnitSerializer(fields=('id', 'geometry', 'type'))
+    su2 = SpatialUnitSerializer(fields=('id', 'geometry', 'type'))
+    rel_class = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SpatialRelationship
+        fields = ('rel_class', 'id', 'su1', 'su2', 'type', 'attributes')
+        read_only_fields = ('id',)
+
+    def get_rel_class(self, obj):
+        return 'spatial'

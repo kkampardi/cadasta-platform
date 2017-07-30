@@ -20,22 +20,7 @@ class PartySerializer(FieldSelectorSerializer, serializers.ModelSerializer):
             project=project, **validated_data)
 
 
-class PartyRelationshipReadSerializer(serializers.ModelSerializer):
-
-    party1 = PartySerializer(fields=('id', 'name', 'type'))
-    party2 = PartySerializer(fields=('id', 'name', 'type'))
-    rel_class = serializers.SerializerMethodField()
-
-    class Meta:
-        model = models.PartyRelationship
-        fields = ('rel_class', 'id', 'party1', 'party2', 'type', 'attributes')
-        read_only_fields = ('id',)
-
-    def get_rel_class(self, obj):
-        return 'party'
-
-
-class PartyRelationshipWriteSerializer(serializers.ModelSerializer):
+class PartyRelationshipSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.PartyRelationship
@@ -66,24 +51,22 @@ class PartyRelationshipWriteSerializer(serializers.ModelSerializer):
             project=project, **validated_data)
 
 
-class TenureRelationshipReadSerializer(serializers.ModelSerializer):
+class PartyRelationshipNestedSerializer(serializers.ModelSerializer):
 
-    party = PartySerializer(fields=('id', 'name', 'type'))
-    spatial_unit = SpatialUnitSerializer(fields=(
-        'id', 'name', 'geometry', 'type'))
+    party1 = PartySerializer(fields=('id', 'name', 'type'))
+    party2 = PartySerializer(fields=('id', 'name', 'type'))
     rel_class = serializers.SerializerMethodField()
 
     class Meta:
-        model = models.TenureRelationship
-        fields = ('rel_class', 'id', 'party', 'spatial_unit', 'tenure_type',
-                  'attributes')
+        model = models.PartyRelationship
+        fields = ('rel_class', 'id', 'party1', 'party2', 'type', 'attributes')
         read_only_fields = ('id',)
 
     def get_rel_class(self, obj):
-        return 'tenure'
+        return 'party'
 
 
-class TenureRelationshipWriteSerializer(serializers.ModelSerializer):
+class TenureRelationshipSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.TenureRelationship
@@ -109,6 +92,23 @@ class TenureRelationshipWriteSerializer(serializers.ModelSerializer):
         project = self.context['project']
         return models.TenureRelationship.objects.create(
             project=project, **validated_data)
+
+
+class TenureRelationshipNestedSerializer(serializers.ModelSerializer):
+
+    party = PartySerializer(fields=('id', 'name', 'type'))
+    spatial_unit = SpatialUnitSerializer(fields=(
+        'id', 'name', 'geometry', 'type'))
+    rel_class = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.TenureRelationship
+        fields = ('rel_class', 'id', 'party', 'spatial_unit', 'tenure_type',
+                  'attributes')
+        read_only_fields = ('id',)
+
+    def get_rel_class(self, obj):
+        return 'tenure'
 
 
 class TenureRelationshipDownloadSerializer(serializers.ModelSerializer):
