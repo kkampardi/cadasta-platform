@@ -344,7 +344,7 @@ class QuestionGroupManagerTest(TestCase):
             'label': 'Basic Select question types',
             'name': 'select_questions',
             'type': 'group',
-            'bind': {'relevant': "${party_type}=”IN”"}
+            'bind': {'relevant': "${party_type}='IN'"}
         }
         questionnaire = factories.QuestionnaireFactory.create()
 

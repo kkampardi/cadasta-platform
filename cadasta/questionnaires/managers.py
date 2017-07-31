@@ -11,16 +11,18 @@ from jsonattrs.models import Attribute, AttributeType, Schema
 from pyxform.builder import create_survey_element_from_dict
 from pyxform.errors import PyXFormError
 from pyxform.xls2json import parse_file_to_json
-from .exceptions import InvalidQuestionnaire
-from .messages import MISSING_RELEVANT
 from core.messages import SANITIZE_ERROR
 from core.validators import sanitize_string
+from .exceptions import InvalidQuestionnaire
+from .messages import MISSING_RELEVANT
+from .validators import validate_relevant
+from .choices import QUESTION_TYPES
 
 ATTRIBUTE_GROUPS = settings.ATTRIBUTE_GROUPS
 
 
 def check_relevant_clause(relevant):
-    if not re.match(r"^\$\{\w+\}=('|\"|”|’)\w+('|\"|”|’)$", relevant):
+    if not validate_relevant(relevant):
         raise InvalidQuestionnaire(
             [_("Invalid relevant clause: {0}".format(relevant))])
 
@@ -303,7 +305,7 @@ class QuestionManager(models.Manager):
     def create_from_dict(self, errors=[], index=0, **kwargs):
         dict = kwargs.pop('dict')
         instance = self.model(**kwargs)
-        type_dict = {name: code for code, name in instance.TYPE_CHOICES}
+        type_dict = {name: code for code, name in QUESTION_TYPES}
 
         relevant = None
         required = False
