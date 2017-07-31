@@ -6,6 +6,19 @@ from core.validators import sanitize_string
 from .choices import QUESTION_TYPES
 
 
+valid_relevent = (
+    r"^(?P<is_not>not\()?"
+    "((\$\{\w+\}\s?(=|>|<|>=|<=|!=)\s?(('|\"|“|‘)\w+('|\"|”|’)|[0-9]*))|"
+    "(selected\(\$\{\w+\},\s?(('|\"|“|‘)\w+('|\"|”|’)|[0-9]*)\)))"
+    "(?(is_not)\))$"
+)
+
+
+def validate_relevant(relevant):
+    segments = re.split(r"\sand\s|\sor\s", relevant)
+    return all(re.match(valid_relevent, s) for s in segments)
+
+
 QUESTIONNAIRE_SCHEMA = {
     'title': {'type': 'string', 'required': True},
     'id_string': {'type': 'string', 'required': True},
@@ -22,14 +35,16 @@ QUESTION_SCHEMA = {
              'enum': [c[0] for c in QUESTION_TYPES]},
     'required': {'type': 'boolean'},
     'constraint': {'type': 'string'},
-    'index': {'type': 'integer', 'required': True}
+    'index': {'type': 'integer', 'required': True},
+    'relevant': {'type': 'string', 'function': validate_relevant}
 }
 
 QUESTION_GROUP_SCHEMA = {
     'name': {'type': 'string', 'required': True},
     'label': {'type': 'string'},
     'type': {'type': 'string', 'required': True},
-    'index': {'type': 'integer', 'required': True}
+    'index': {'type': 'integer', 'required': True},
+    'relevant': {'type': 'string', 'function': validate_relevant}
 }
 
 QUESTION_OPTION_SCHEMA = {
@@ -74,6 +89,10 @@ def validate_schema(schema, json):
             if reqs.get('enum') and item not in reqs.get('enum'):
                 item_errors.append(
                     _("{} is not an accepted value.").format(item))
+            if reqs.get('function') and not reqs['function'](item):
+                if key == 'relevant':
+                    item_errors.append(
+                        _("Invalid relevant clause: {0}").format(item))
             if not sanitize_string(item):
                 item_errors.append(SANITIZE_ERROR)
 
@@ -145,16 +164,3 @@ def validate_questionnaire(json):
 
     if errors:
         return errors
-
-
-valid_relevent = (
-    r"^(?P<is_not>not\()?"
-    "((\$\{\w+\}\s?(=|>|<|>=|<=|!=)\s?(('|\"|“|‘)\w+('|\"|”|’)|[0-9]*))|"
-    "(selected\(\$\{\w+\},\s?(('|\"|“|‘)\w+('|\"|”|’)|[0-9]*)\)))"
-    "(?(is_not)\))$"
-)
-
-
-def validate_relevant(relevant):
-    segments = re.split(r"\sand\s|\sor\s", relevant)
-    return all(re.match(valid_relevent, s) for s in segments)

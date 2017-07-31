@@ -988,10 +988,10 @@ class QuestionnaireSerializerTest(UserTestCase, FileStorageTestCase, TestCase):
             data=data,
             context={'project': project}
         )
-        serializer.is_valid(raise_exception=True)
-        with pytest.raises(InvalidQuestionnaire) as e:
-            serializer.save()
-        assert str(e.value) == "Invalid relevant clause: $party_type='IN'"
+        with pytest.raises(ValidationError) as e:
+            serializer.is_valid(raise_exception=True)
+        assert ("Invalid relevant clause: $party_type='IN'" in
+                e.value.detail['questions'][0]['relevant'])
 
 
 class QuestionGroupSerializerTest(UserTestCase, TestCase):
