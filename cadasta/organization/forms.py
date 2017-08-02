@@ -482,7 +482,7 @@ class ProjectEditPermissions(PermissionsForm, forms.Form):
 # TODO: Remove, not needed after async added
 class DownloadForm(forms.Form):
     CHOICES = (
-        ('shp', 'SHP'),
+        # ('shp', 'SHP'),
         ('xls', 'XLS'),
         # ('res', 'Resources'),
         # ('all', 'All data'),
@@ -500,10 +500,10 @@ class DownloadForm(forms.Form):
         file_name = '{}-{}-{}'.format(self.project.id, self.user.id, t)
         type = self.cleaned_data['type']
 
-        if type == 'shp':
-            e = ShapeExporter(self.project)
-            path, mime = e.make_download(file_name + '-shp')
-        elif type == 'xls':
+        # if type == 'shp':
+        #     e = ShapeExporter(self.project)
+        #     path, mime = e.make_download(file_name + '-shp')
+        if type == 'xls':
             e = XLSExporter(self.project)
             path, mime = e.make_download(file_name + '-xls')
         # elif type == 'res':

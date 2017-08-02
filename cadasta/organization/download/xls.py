@@ -14,6 +14,14 @@ MIME_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 class XLSExporter(Exporter):
 
     def write_items(self, worksheet, queryset, content_type, model_attrs):
+        # # build column labels
+        # columns = list(model_attrs)
+        # schema_attrs = self.get_schema_attrs(content_type)
+        # for attrs in schema_attrs.values():
+        #     for a in attrs.values():
+        #         columns.append(a.name)
+
+
         schema_attrs = self.get_schema_attrs(content_type)
 
         # build column labels
@@ -43,6 +51,7 @@ class XLSExporter(Exporter):
         self.write_items(worksheet, locations, content_type,
                          ['id', 'geometry.ewkt', 'type', 'area'])
 
+    # DONE
     def write_parties(self):
         parties = self.project.parties.all()
         if parties.count() == 0:
@@ -53,6 +62,7 @@ class XLSExporter(Exporter):
         self.write_items(worksheet, parties, content_type,
                          ['id', 'name', 'type'])
 
+    # DONE
     def write_relationships(self):
         relationships = self.project.tenure_relationships.all()
         if relationships.count() == 0:
