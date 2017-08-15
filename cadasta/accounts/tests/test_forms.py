@@ -23,6 +23,7 @@ from .factories import UserFactory
 
 
 class RegisterFormTest(UserTestCase, TestCase):
+
     def test_valid_data(self):
         data = {
             'username': 'imagine71',
@@ -508,9 +509,10 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
         assert user.email_verified is True
         assert user.phone == '+919327768250'
         assert user.phone_verified is True
-        assert len(mail.outbox) == 2
+        assert len(mail.outbox) == 3
         assert 'john2@beatles.uk' in mail.outbox[0].to
         assert 'john@beatles.uk' in mail.outbox[1].to
+        assert 'john@beatles.uk' in mail.outbox[2].to
 
     def test_display_name(self):
         user = UserFactory.create(username='imagine71',
@@ -654,8 +656,8 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
 
         form = forms.ProfileForm(data, request=request, instance=user)
         form.save()
-        with pytest.raises(EmailAddress.DoesNotExist):
-            EmailAddress.objects.get(email="user1@example.com")
+        assert EmailAddress.objects.filter(
+            email="user1@example.com").exists() is False
 
         with pytest.raises(IntegrityError):
             user = UserFactory.create(username='user2',
@@ -724,6 +726,8 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
         assert user.phone_verified is True
         assert VerificationDevice.objects.filter(
             unverified_phone='+919327768250').exists() is False
+        assert len(mail.outbox) == 1
+        assert 'sherlock.holmes@bbc.uk' in mail.outbox[0].to
 
     def test_update_email_only(self):
         user = UserFactory.create(username='sherlock',
@@ -763,6 +767,7 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
         assert 'sherlock.holmes@bbc.uk' in mail.outbox[1].to
         assert EmailAddress.objects.filter(
             email="sherlock.holmes@bbc.uk").exists() is False
+        # sms must be sent about email change to phone '+919327768250'
 
     def test_update_with_duplicate_phone(self):
         UserFactory.create(phone='+12345678990')
@@ -813,6 +818,8 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
         assert user.phone == '+919327768250'
         assert user.phone_verified is False
         assert VerificationDevice.objects.count() == 1
+        assert len(mail.outbox) == 1
+        assert 'sherlock.holmes@bbc.uk' in mail.outbox[0].to
 
     def test_update_add_email(self):
         user = UserFactory.create(username='sherlock',
@@ -928,6 +935,8 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
         assert not user.phone
         assert user.phone_verified is False
         assert VerificationDevice.objects.count() == 0
+        assert len(mail.outbox) == 1
+        assert 'sherlock.holmes@bbc.uk' in mail.outbox[0].to
 
     def test_update_remove_email(self):
         user = UserFactory.create(username='sherlock',
@@ -956,6 +965,8 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
         assert not user.email
         assert user.email_verified is False
         assert EmailAddress.objects.count() == 0
+        assert len(mail.outbox) == 1
+        assert 'sherlock.holmes@bbc.uk' in mail.outbox[0].to
 
     def test_update_add_phone_and_remove_email(self):
         user = UserFactory.create(username='sherlock',
@@ -987,6 +998,8 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
         assert user.email_verified is False
         assert EmailAddress.objects.count() == 0
         assert VerificationDevice.objects.count() == 1
+        assert len(mail.outbox) == 1
+        assert 'sherlock.holmes@bbc.uk' in mail.outbox[0].to
 
     def test_update_add_email_and_remove_phone(self):
         user = UserFactory.create(username='sherlock',
@@ -1026,6 +1039,9 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
         assert user.email_verified is False
         assert EmailAddress.objects.count() == 1
         assert VerificationDevice.objects.count() == 0
+        assert len(mail.outbox) == 1
+        assert 'sherlock.holmes@bbc.uk' in mail.outbox[0].to
+        # notify user via sms about phone deletion
 
     def test_update_phone_and_remove_email(self):
         user = UserFactory.create(username='sherlock',
@@ -1061,6 +1077,10 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
         assert EmailAddress.objects.count() == 0
         assert VerificationDevice.objects.filter(
             unverified_phone='+12345678990').exists() is False
+        assert len(mail.outbox) == 1
+        assert 'sherlock.holmes@bbc.uk' in mail.outbox[0].to
+        # send sms to user's phone '+12345678990' about email removal
+        # send sms to user's phone '+12345678990' about phone change
 
     def test_update_email_and_remove_phone(self):
         user = UserFactory.create(username='sherlock',
@@ -1102,6 +1122,10 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
         assert EmailAddress.objects.filter(
             email='john.watson@bbc.uk').exists() is False
         assert VerificationDevice.objects.count() == 0
+        assert len(mail.outbox) == 3
+        assert 'sherlock.holmes@bbc.uk' in mail.outbox[0].to
+        assert 'john.watson@bbc.uk' in mail.outbox[1].to
+        assert 'john.watson@bbc.uk' in mail.outbox[2].to
 
     def test_update_with_existing_email_in_EmailAddress(self):
         user = UserFactory.create()
@@ -1155,6 +1179,7 @@ class ProfileFormTest(UserTestCase, FileStorageTestCase, TestCase):
 
 
 class ChangePasswordFormTest(UserTestCase, TestCase):
+
     def test_valid_data(self):
         user = UserFactory.create(password='beatles4Lyfe!')
 
@@ -1271,6 +1296,7 @@ class ChangePasswordFormTest(UserTestCase, TestCase):
 
 
 class ResetPasswordKeyFormTest(UserTestCase, TestCase):
+
     def test_valid_data(self):
         user = UserFactory.create(password='beatles4Lyfe!')
 
@@ -1367,6 +1393,7 @@ class ResetPasswordKeyFormTest(UserTestCase, TestCase):
 
 
 class ResetPasswordFormTest(UserTestCase, TestCase):
+
     def test_email_not_sent_reset(self):
         data = {
             'email': 'john@thebeatles.uk'
@@ -1388,6 +1415,7 @@ class ResetPasswordFormTest(UserTestCase, TestCase):
 
 
 class PhoneVerificationFormTest(UserTestCase, TestCase):
+
     def setUp(self):
         super().setUp()
         self.user = UserFactory.create(username='sherlock',
