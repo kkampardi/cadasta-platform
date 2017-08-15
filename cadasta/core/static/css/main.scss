@@ -193,7 +193,8 @@ body.tinted-bg #page-content { // for bg image
 #registration #page-content,
 #project-single #page-content,
 #project-wizard.map #page-content,
-#organization-single #page-content { // for single project and org pages with left subnav
+#organization-single #page-content,
+#user-single #page-content { // for single project, org, and user pages with or without left subnav
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
@@ -237,6 +238,7 @@ body.tinted-bg #page-content { // for bg image
   #project-single #page-content,
   #project-wizard.page #page-content,
   #organization-single #page-content,
+  #user-single #page-content,
   #registration #page-content {
     position: relative;
     top: 0;
@@ -255,7 +257,8 @@ main.container-fluid {
 -------------------------------------------------------------- */
 
 #project-single #page-content main,
-#organization-single #page-content main {
+#organization-single #page-content main,
+#user-single #page-content main {
   position: relative;
   left: 0;
   margin-left: 0;
@@ -580,7 +583,7 @@ table#select-list {
   }
 }
 
-a.tile-box.btn, 
+a.tile-box.btn,
 .tile-box-shortcut {
   .tile-content-wrapper > .glyphicon {
       -webkit-transition: all .2s ease-in-out;
@@ -591,7 +594,7 @@ a.tile-box.btn,
   &:hover .tile-content-wrapper > .glyphicon {
     opacity: .70;
     -moz-opacity: .70;
-  } 
+  }
 }
 
 .tile-box.bg-white  { // for white backgrounds
@@ -648,7 +651,7 @@ a.tile-box.btn,
   }
 }
 .overlay-wrapper.map {
-  padding: 15px; 
+  padding: 15px;
   position: absolute;
   top: 0;
   left: 0;
@@ -659,7 +662,7 @@ a.tile-box.btn,
     background: rgba(255, 255, 255, 0.5);
     height: 100%;
     min-height: 100%;
-    padding: 40px 20% 0; 
+    padding: 40px 20% 0;
     margin-bottom: 0;
   }
 }
@@ -763,10 +766,30 @@ section {
   .panel-topimage { // above header that spans panel
     padding-bottom: 20px;
     border-bottom: 1px solid $table-border-color;
+    #preview-box {
+      margin: 20px auto 10px auto;
+      width: 150px;
+      height: 150px;
+      background-color: white;
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+      text-align: center;
+    }
+    #avatar-preview {
+      width: auto;
+      height: 150px;
+      position: absolute;
+      top: -9999px;
+      bottom: -9999px;
+      left: -9999px;
+      right: -9999px;
+      margin: auto;
+    }
   }
   .panel-heading {
     @include clearfix;
-    .glyphicon-cog, 
+    .glyphicon-cog,
     .glyphicon-plus {
       font-size: 18px;
       margin-top: 4px;
@@ -776,14 +799,14 @@ section {
       -moz-opacity: .50;
       float: right;
     }
-    a > .glyphicon-cog, 
+    a > .glyphicon-cog,
     a > .glyphicon-plus {
       -webkit-transition: all .2s ease-in-out;
       -moz-transition: all .2s ease-in-out;
       -ms-transition: all .2s ease-in-out;
       -o-transition: all .2s ease-in-out;
     }
-    a:hover > .glyphicon-cog, 
+    a:hover > .glyphicon-cog,
     a:hover > .glyphicon-plus {
       opacity: .90;
       -moz-opacity: .90;
@@ -820,7 +843,7 @@ section {
   }
   .panel-title-bordered {
     border-bottom: solid 1px $gray-light;
-    padding-bottom: 8px; 
+    padding-bottom: 8px;
     margin-bottom: 8px;
   }
   .panel-subtitle { // applied to h4

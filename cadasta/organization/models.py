@@ -317,6 +317,7 @@ class ProjectRole(RandomIDModel):
                             default='PU')
 
     history = HistoricalRecords()
+    _dict_role_choices = dict(ROLE_CHOICES)
 
     class Meta:
         unique_together = ('project', 'user')
@@ -326,6 +327,10 @@ class ProjectRole(RandomIDModel):
                        ' project={obj.project.slug}'
                        ' role={obj.role}>')
         return repr_string.format(obj=self)
+
+    @property
+    def role_verbose(self):
+        return self._dict_role_choices[self.role]
 
 
 def assign_prj_policies(role, delete=False):
