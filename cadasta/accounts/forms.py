@@ -296,7 +296,7 @@ class PhoneVerificationForm(forms.Form):
                         " Please click on 'here' to receive the new token."))
             else:
                 raise forms.ValidationError(
-                    "Invalid Token. Enter a valid token.")
+                    _("Invalid Token. Enter a valid token."))
         except ValueError:
             raise forms.ValidationError(_("Token must be a number."))
         return token

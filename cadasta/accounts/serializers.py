@@ -264,6 +264,7 @@ class UserSerializer(SanitizeFieldSerializer,
 
 
 class AccountLoginSerializer(djoser_serializers.LoginSerializer):
+
     def validate(self, attrs):
         attrs = super(AccountLoginSerializer, self).validate(attrs)
 
@@ -274,6 +275,7 @@ class AccountLoginSerializer(djoser_serializers.LoginSerializer):
 
 
 class ChangePasswordSerializer(djoser_serializers.SetPasswordRetypeSerializer):
+
     def validate(self, attrs):
 
         if not self.context['request'].user.change_pw:
@@ -291,3 +293,43 @@ class ChangePasswordSerializer(djoser_serializers.SetPasswordRetypeSerializer):
                 _("The password is too similar to the username."))
 
         return password
+
+
+class PhoneVerificationSerializer(serializers.Serializer,
+                                  SanitizeFieldSerializer):
+    phone = serializers.RegexField(
+        regex=r'^\+(?:[0-9]?){6,14}[0-9]$',
+        error_messages={'invalid': phone_format},
+        required=True
+    )
+    token = serializers.CharField(label=_("Token"),
+                                  max_length=settings.TOTP_DIGITS,
+                                  required=True)
+
+    def validate_token(self, token):
+        phone = self.initial_data.get('phone')
+        try:
+            token = int(token)
+            device = VerificationDevice.objects.get(
+                unverified_phone=phone, verified=False)
+            user = device.user
+            if device.verify_token(token):
+                if user.phone != phone:
+                    user.phone = phone
+                user.phone_verified = True
+                user.is_active = True
+                user.save()
+                device.delete()
+                return token
+            elif device.verify_token(token=token, tolerance=5):
+                raise serializers.ValidationError(
+                    _("The token has expired."))
+            else:
+                raise serializers.ValidationError(
+                    _("Invalid Token. Enter a valid token."))
+        except ValueError:
+            raise serializers.ValidationError(_("Token must be a number."))
+
+        except VerificationDevice.DoesNotExist:
+            raise serializers.ValidationError(
+                "Phone is already verified or not linked to any user account.")
