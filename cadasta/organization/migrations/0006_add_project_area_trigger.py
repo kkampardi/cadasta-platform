@@ -31,6 +31,7 @@ class Migration(migrations.Migration):
                 old_project_area numeric(25, 10);
                 diff numeric(25, 10);
             BEGIN
+
                 IF (TG_OP = 'DELETE')
                 THEN
                     project_id := OLD.project_id;
@@ -40,13 +41,13 @@ class Migration(migrations.Migration):
 
                 IF (TG_OP = 'INSERT')
                 THEN
-                    diff := NEW.area;
-                ELSIF (TG_OP = 'UPDATE') AND (NEW.area <> OLD.area)
+                    diff := COALESCE(NEW.area, 0);
+                ELSIF (TG_OP = 'UPDATE') AND (COALESCE(NEW.area, 0) <> COALESCE(OLD.area, 0))
                 THEN
-                    diff := NEW.area - OLD.area;
+                    diff := COALESCE(NEW.area, 0) - COALESCE(OLD.area, 0);
                 ELSIF (TG_OP = 'DELETE')
                 THEN
-                    diff := OLD.area * -1;
+                    diff := COALESCE(OLD.area, 0) * -1;
                 END IF;
 
                 IF diff <> 0
