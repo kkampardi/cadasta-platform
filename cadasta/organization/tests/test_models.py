@@ -251,6 +251,20 @@ class ProjectAreaTest(TestCase):
         assert initial_area < self.project.area
         assert approx(self.project.area) == self.sum_areas(self.su1, self.su2)
 
+    def test_update_locations_change_geometry_type(self):
+        self.su1.save()
+        self.su2.save()
+
+        self.project.refresh_from_db()
+        assert approx(self.project.area) == self.sum_areas(self.su1, self.su2)
+
+        initial_area = self.project.area
+        self.su2.geometry = ('POINT(12.32306 51.327866)')
+        self.su2.save()
+        self.project.refresh_from_db()
+        assert initial_area > self.project.area
+        assert approx(self.project.area) == approx(self.su1.area)
+
 
 class ProjectRoleTest(UserTestCase, TestCase):
     def setUp(self):
