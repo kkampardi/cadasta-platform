@@ -233,6 +233,7 @@ class ProfileForm(SanitizeFieldsForm, forms.ModelForm):
 
 
 class ChangePasswordMixin:
+
     def clean_password(self):
         if not self.user.change_pw:
             raise forms.ValidationError(_("The password for this user can not "
@@ -278,6 +279,7 @@ class ResetPasswordKeyForm(ChangePasswordMixin,
 
 
 class ResetPasswordForm(allauth_forms.ResetPasswordForm):
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
         self.users = User.objects.filter(email=email)
