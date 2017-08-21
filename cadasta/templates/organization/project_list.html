@@ -70,7 +70,10 @@
             <img src="{{ proj.organization.logo }}" class="org-logo" alt="{{ proj.organization.name }}"/>
           </div>
         {% else %}
-          <p class="org-name-alt">{{ proj.organization.name }}</p>
+          <span class="org-name-alt">{{ proj.organization.name }}</span>
+          {% if proj.organization.archived %}
+            <span class="label label-danger">{% trans "Archived" %}</span>
+          {% endif %}
         {% endif %}
       </td>
       <td class="hidden-xs hidden-sm">{{ proj.country.name }}</td>

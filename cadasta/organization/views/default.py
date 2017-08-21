@@ -14,7 +14,7 @@ from django.conf import settings
 from django.core.files.storage import DefaultStorage, FileSystemStorage
 from django.core.urlresolvers import reverse
 from django.db import transaction
-from django.db.models import Sum, When, Case, IntegerField
+from django.db.models import Sum, When, Case, IntegerField, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import ugettext as _
@@ -138,9 +138,6 @@ class OrgArchiveView(LoginPermissionRequiredMixin,
         self.object = self.get_object()
         self.object.archived = self.do_archive
         self.object.save()
-        for project in self.object.projects.all():
-            project.archived = self.do_archive
-            project.save()
         return redirect(self.get_success_url())
 
 
@@ -370,18 +367,25 @@ class ProjectList(PermissionRequiredMixin,
             projects = Project.objects.select_related('organization')
         else:
             projects = []
-            projects.extend(Project.objects.filter(
-                access='public', archived=False).select_related(
-                    'organization'))
+            projects.extend(
+                Project.objects.filter(
+                    access='public',
+                    archived=False,
+                    organization__archived=False
+                ).select_related('organization')
+            )
             if hasattr(user, 'organizations'):
                 for org in user.organizations.all():
                     projects.extend(org.projects.filter(
                         access='private', archived=False).select_related(
                             'organization'))
-                    if OrganizationRole.objects.get(organization=org,
-                                                    user=user).admin is True:
+                    is_admin = OrganizationRole.objects.get(
+                        organization=org, user=user).admin
+                    if is_admin:
                         projects.extend(org.projects.filter(
-                            archived=True).select_related('organization'))
+                            Q(archived=True) | Q(organization__archived=True)
+                                ).select_related('organization'))
+
         self.object_list = sorted(
             projects, key=lambda p: p.organization.slug + ':' + p.slug)
         context = self.get_context_data()

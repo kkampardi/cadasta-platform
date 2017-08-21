@@ -439,7 +439,7 @@ class OrganizationArchiveTest(ViewTestCase, UserTestCase, TestCase):
         assert ('/organizations/{}/'.format(self.org.slug)
                 in response.location)
         assert self.org.archived is True
-        assert project.archived is True
+        assert project.archived is False
 
 
 class OrganizationUnarchiveTest(ViewTestCase, UserTestCase, TestCase):
@@ -495,7 +495,7 @@ class OrganizationUnarchiveTest(ViewTestCase, UserTestCase, TestCase):
         assert ('/organizations/{}/'.format(self.org.slug)
                 in response.location)
         assert self.org.archived is False
-        assert project.archived is False
+        assert project.archived is True
 
 
 class OrganizationMembersTest(ViewTestCase, UserTestCase, TestCase):
