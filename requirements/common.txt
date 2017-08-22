@@ -1,5 +1,5 @@
-Django==1.11.4
-djangorestframework==3.6.3
+Django==1.10.7  # rq.filter: <1.11.0
+djangorestframework==3.6.4
 psycopg2==2.7.3
 djoser==0.6.0
 django-allauth==0.33.0
@@ -28,7 +28,7 @@ django-jsonattrs==0.1.23
 openpyxl==2.4.8
 pytz==2017.2
 shapely==1.6.0
-gdal==2.2.1
+gdal==1.11.2  # rq.filter: <2.0.0
 pylibmc==1.5.2
 awscli==1.11.137
 pandas==0.20.3
